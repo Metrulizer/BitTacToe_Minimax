@@ -1,0 +1,3 @@
+﻿  BitTacToe2.cpp
+C:\Users\kaino\source\repos\BitTacToe2\BitTacToe2.cpp(23,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+  BitTacToe2.vcxproj -> C:\Users\kaino\source\repos\BitTacToe2\Debug\BitTacToe2.exe
