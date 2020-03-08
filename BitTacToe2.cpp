@@ -15,46 +15,39 @@
 char cellInputFilter();
 int gameTypeFilter();
 void gameLoop_Human(BitTacToe b, bool player);
-void gameLoop_Synth(BitTacToe b, bool player);
+void gameLoop_Synth(BitTacToe b, bool player, bool depthWeight = false);
 
 int main()
 {
 	BitTacToe b;
 	srand(time(NULL));
 
-	std::cout << "Play Versus:	0 = Human\n\t\t1 = AI\n\t\tq = Quit\n\n";
+	std::cout << "Play Versus:	0 = Human\n\t\t"
+		<< "1 = AI\n\t\t"
+		<< "2 = AI w/ depth weighting (experimental)\n\t\t"
+		<< "q = Quit\n\n";
 	int gametype = gameTypeFilter();
 
 	while (gametype != 99) {
-		(gametype == 0) ?
-			gameLoop_Human(b, (rand() & 1)) :
-			gameLoop_Synth(b, (rand() & 1));
+		switch (gametype)
+		{
+		case 0:
+			gameLoop_Human(b, (rand() & 1));
+			break;
+		case 1:
+			gameLoop_Synth(b, (rand() & 1), false);
+			break;
+		case 2:
+			gameLoop_Synth(b, (rand() & 1), true);
+			break;
+		case 99:
+		default:
+			break;
+		}
+		//(gametype == 0) ? :
 		gametype = gameTypeFilter();
 	}
 
-}
-
-void gameLoop_Human(BitTacToe b, bool playerX) {
-	int cellChoice;
-	std::cout << "HUMAN VS HUMAN\n\n";
-	std::cout << (playerX ? "X" : "O") << " plays first.\n";
-
-	while (!b.evaluate()) {
-
-		// Filter out any already taken cells
-		do {
-			cellChoice = cellInputFilter() - 1;
-			if (!b.cellFull(cellChoice)) std::cout << " but that cell is full.\n";
-		} while (!b.cellFull(cellChoice));
-
-		// Apply and print changes
-		b.humanMove(playerX, cellChoice);
-		b.twoDeePrint();
-
-		// Next player
-		playerX ^= true;
-	}
-	std::cout << "Player " << (playerX ? 'X' : 'O') << " wins!\n";
 }
 
 // Get a cell value, drop anything else.
@@ -83,6 +76,8 @@ int gameTypeFilter() {
 			return 0;
 		case '1':
 			return 1;
+		case '2':
+			return 2;
 		case 'q':
 			return 99;
 			//case 'y':
@@ -105,14 +100,37 @@ int gameTypeFilter() {
 	return -1;
 }
 
-void gameLoop_Synth(BitTacToe b, bool playerX) {
+void gameLoop_Human(BitTacToe b, bool playerX) {
 	int cellChoice;
-	std::cout << "HUMAN VS AI\n\n";
+	std::cout << "HUMAN VS HUMAN\n\n";
 	std::cout << (playerX ? "X" : "O") << " plays first.\n";
 
+	while (!b.evaluate()) {
+
+		// Filter out any already taken cells
+		do {
+			cellChoice = cellInputFilter() - 1;
+			if (!b.cellFull(cellChoice)) std::cout << " but that cell is full.\n";
+		} while (!b.cellFull(cellChoice));
+
+		// Apply and print changes
+		b.humanMove(playerX, cellChoice);
+		b.twoDeePrint();
+
+		// Next player
+		playerX ^= true;
+	}
+	std::cout << "\nPlayer " << (playerX ? 'X' : 'O') << " wins!\n";
+}
+
+void gameLoop_Synth(BitTacToe b, bool player, bool depthWeight) {
+	int cellChoice;
+	std::cout << "HUMAN VS AI\n\n";
+	std::cout << (player ? "X" : "O") << " plays first.\n";
+
 	while (!b.evaluate() & !b.gameFull()) {
-		if (playerX) {
-			b.flip_X(b.findBestMove());
+		if (player) {
+			b.flip_X(b.findBestMove(depthWeight));
 			// Print changes
 			b.twoDeePrint();
 		}
@@ -124,17 +142,19 @@ void gameLoop_Synth(BitTacToe b, bool playerX) {
 			} while (!b.cellFull(cellChoice));
 
 			// Apply changes
-			b.humanMove(playerX, cellChoice);
+			b.humanMove(player, cellChoice);
 
 		}
 
 		// Next player
-		playerX ^= true;
+		player ^= true;
 	}
-	if (b.gameFull()) {
+	if (!b.evaluate()) {
 		b.twoDeePrint();
 		std::cout << "It's a tie!\n";
 	}
-	else std::cout << "Player " << (playerX ? 'X' : 'O') << " wins!\n";
-
+	else {
+		b.twoDeePrint();
+		std::cout << "\nPlayer " << (~player ? 'X' : 'O') << " wins!\n";
+	}
 }

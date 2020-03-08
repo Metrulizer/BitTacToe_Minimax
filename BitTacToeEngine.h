@@ -14,13 +14,15 @@ public:
 	~BitTacToe();
 
 	void twoDeePrint();
-
 	int evaluate();
-	int minimax(bool isMax);
-
-	std::bitset<9> findBestMove();
-
 	void humanMove(bool isMax, int cellToFlip);
+
+	//int minimax(bool isMax);
+	int minimax(bool isMax, int depth, bool depthWeight, int alpha = -1000, int beta = 1000);
+
+	std::bitset<9> findBestMove(bool depthWeight);
+
+
 
 	// Below, in the private section, you can read the justification of using bitsets over 2d arrays
 

@@ -16,8 +16,8 @@ int BitTacToe::evaluate() {
 			The AND of val and marked cells returns val if marked cells contains a victory condition */
 	for (auto& val : eval) {
 		//	Return utility score given victory
-		if (val == (val & mask & data)) return 1;
-		else if (val == (val & mask & ~data)) return -1;
+		if (val == (val & mask & data)) return 100;
+		else if (val == (val & mask & ~data)) return -100;
 	}
 	// Return utility score given zero victory
 	return 0;
@@ -28,7 +28,7 @@ void BitTacToe::humanMove(bool isX, int cellToFlip) {
 	isX ? flip_X(cellToFlip) : flip_O(cellToFlip);
 }
 
-int BitTacToe::minimax(bool isMax) {
+int BitTacToe::minimax(bool isMax, int depth, bool depthWeight, int alpha, int beta) {
 
 	// ===== ======= ======= ======= ======= ======= ======= =======
 	// If the game has been won or drawn, send the score back
@@ -52,15 +52,21 @@ int BitTacToe::minimax(bool isMax) {
 			if (cellFull(bitsX))
 			{
 				flip_X(bitsX);
-				best = std::max(best, minimax(!isMax));
+				best = std::max(best, minimax(!isMax, depth + 1, depthWeight, alpha, beta));
+				alpha = std::max(alpha, best);
 				//twoDeePrint();
 				//std::cout << best << '\n';
 				flip_X(bitsX);
 			}
+			if (beta <= alpha) {
+				//std::cout << beta << " under or equals " << alpha << '\n';
+				break;
+			}
+			//else std::cout << "unbroken\n";
 
 			bitsX <<= 1;
 		}
-		return best;
+		return best + (depthWeight ? -depth : 0);	// with depth, maximizer gets a penalty for delays
 		// - ------- ------- ------- ------- ------- -------
 	}
 	else
@@ -75,20 +81,25 @@ int BitTacToe::minimax(bool isMax) {
 			if (cellFull(bitsO))
 			{
 				flip_O(bitsO);
-				best = std::min(best, minimax(!isMax));
-				//twoDeePrint();
-				//std::cout << best << '\n';
+				best = std::min(best, minimax(!isMax, depth + 1, depthWeight, alpha, beta));
+				beta = std::min(beta, best);
 				flip_O(bitsO);
 			}
+			if (beta <= alpha) {
+				//std::cout << beta << " under or equals " << alpha << '\n';
+				break;
+			}
+			//else std::cout << "unbroken\n";
+
 			bitsO <<= 1;
 		}
-		return best;
+		return best + (depthWeight ? 0 : 0);	// with depth, penalty isn't applied because that's the maximizer's perogative
 	}
 
 	return 0;
 }
 
-std::bitset<9> BitTacToe::findBestMove() {
+std::bitset<9> BitTacToe::findBestMove(bool depthWeight) {
 	std::bitset<9> bits(0b000000001);
 	//std::cout << "mask = " << mask << " data = " << data;
 	twoDeePrint();
@@ -98,7 +109,7 @@ std::bitset<9> BitTacToe::findBestMove() {
 		if ((mask & bits) == 0) {
 			// Get value at unfilled cell
 			flip_X(bits);
-			int value = minimax(false);
+			int value = minimax(false, 0, depthWeight);
 			flip_X(bits);
 
 			if (value > bestValue) {
@@ -106,8 +117,10 @@ std::bitset<9> BitTacToe::findBestMove() {
 				bestValue = value;
 			}
 
+			//std::cout << bits << '\n';
+			std::cout << "bitset = " << bits << " value = " << value << '\n';
+			//std::cout << "bbs = " << bestBitSet << " bv = " << bestValue << '\n';
 		}
-		//std::cout << bits << '\n';
 		bits <<= 1;
 	}
 
@@ -159,13 +172,13 @@ BitTacToe::BitTacToe()
 	std::cout << "flip test done, minimax time" << '\n';
 
 	int bestVal = -1000;
-	minimax(!false);
+	minimax(!false, 0, false);
 
 
 	mask = 0b111111000;
 	data = 0b101001000;
 
-	std::cout << findBestMove() << '\n';
+	std::cout << findBestMove(false) << '\n';
 
 	mask = 0b000000000;
 	data = 0b000000000;
